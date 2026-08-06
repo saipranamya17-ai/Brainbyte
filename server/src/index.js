@@ -16,14 +16,18 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-// CORS — lock to client origin
+// CORS — allow client origin and localhost
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  origin: true, // Allow requesting origin for easy cross-domain deployment
   credentials: true,
 }));
 
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
+
+// Root & Health check
+app.get('/', (_req, res) => res.json({ status: 'ok', message: 'AdaptiSkill API Server is running 🚀' }));
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -35,9 +39,6 @@ app.use('/api/interview', interviewRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/profile', profileRoutes);
-
-// Health check
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 // Centralized error handler (must be last)
 app.use(errorHandler);

@@ -250,9 +250,9 @@ async function main() {
   });
 
   const interviewTurns = [
-    { question: 'Reverse a linked list in O(n) time.', answer: 'Use three pointers: prev, current, next...', score: 0.85, feedback: 'Good explanation of the iterative approach.' },
-    { question: 'Find the time complexity of binary search.', answer: 'O(log n) because we halve the search space.', score: 0.95, feedback: 'Excellent! Also mentioned space complexity correctly.' },
-    { question: 'Explain dynamic programming with an example.', answer: 'DP breaks problems into overlapping subproblems...', score: 0.65, feedback: 'Good start, but could give a more concrete example.' },
+    { question: 'Reverse a linked list in O(n) time.', answer: 'Use three pointers: prev, current, next...', score: 0.85, aiFeedback: 'Good explanation of the iterative approach.' },
+    { question: 'Find the time complexity of binary search.', answer: 'O(log n) because we halve the search space.', score: 0.95, aiFeedback: 'Excellent! Also mentioned space complexity correctly.' },
+    { question: 'Explain dynamic programming with an example.', answer: 'DP breaks problems into overlapping subproblems...', score: 0.65, aiFeedback: 'Good start, but could give a more concrete example.' },
   ];
 
   for (let i = 0; i < interviewTurns.length; i++) {

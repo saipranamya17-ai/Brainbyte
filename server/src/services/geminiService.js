@@ -14,12 +14,12 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const MODEL = 'gemini-1.5-flash';
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const CANDIDATE_MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest'];
 
-function getModel() {
+function getModel(modelName = 'gemini-1.5-flash') {
   return genAI.getGenerativeModel({
-    model: MODEL,
+    model: modelName,
     generationConfig: {
       temperature: 0.7,
       maxOutputTokens: 8192,
@@ -34,32 +34,43 @@ function getModel() {
  * @returns {any} parsed JSON
  */
 async function callGemini(prompt, attempt = 1) {
-  const model = getModel();
-
   const strictPrefix = attempt === 1
     ? ''
     : '\n\nCRITICAL: Your previous response was not valid JSON. Return ONLY raw JSON with no markdown, no backticks, no commentary, no extra text of any kind. Start your response with { or [.\n\n';
 
   const fullPrompt = strictPrefix + prompt;
 
-  const result = await model.generateContent(fullPrompt);
-  const raw = result.response.text().trim();
-
-  // Strip markdown code fences if model adds them despite instructions
-  const cleaned = raw
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/, '')
-    .trim();
-
-  try {
-    return JSON.parse(cleaned);
-  } catch (parseErr) {
-    if (attempt < 2) {
-      console.warn('[GeminiService] JSON parse failed, retrying with stricter prompt…');
-      return callGemini(prompt, 2);
+  let lastError;
+  for (const modelName of CANDIDATE_MODELS) {
+    try {
+      const model = getModel(modelName);
+      const result = await model.generateContent(fullPrompt);
+      const raw = result.response.text().trim();
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+      return JSON.parse(cleaned);
+    } catch (err) {
+      lastError = err;
+      if (err.message && (err.message.includes('API key not valid') || err.message.includes('INVALID_ARGUMENT'))) {
+        throw new Error('Invalid Google Gemini API Key. Please get a valid key starting with AIzaSy... from https://aistudio.google.com/app/apikey');
+      }
+      if (err.message && err.message.includes('404')) {
+        continue;
+      }
+      if (attempt < 2) {
+        return callGemini(prompt, 2);
+      }
+      throw err;
     }
-    throw new Error(`Gemini returned non-JSON after 2 attempts: ${cleaned.slice(0, 200)}`);
   }
+
+  if (attempt < 2) {
+    return callGemini(prompt, 2);
+  }
+
+  throw lastError || new Error('Failed to generate content from Gemini AI');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

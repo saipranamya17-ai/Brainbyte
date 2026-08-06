@@ -8,6 +8,9 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  build: {
+    chunkSizeWarningLimit: 1600,
+  },
   server: {
     port: 5173,
     proxy: {

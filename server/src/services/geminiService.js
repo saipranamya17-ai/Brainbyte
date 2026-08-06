@@ -15,9 +15,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const CANDIDATE_MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest'];
+const CANDIDATE_MODELS = ['gemini-flash-latest', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
-function getModel(modelName = 'gemini-1.5-flash') {
+function getModel(modelName = 'gemini-flash-latest') {
   return genAI.getGenerativeModel({
     model: modelName,
     generationConfig: {

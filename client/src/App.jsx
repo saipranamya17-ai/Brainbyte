@@ -47,6 +47,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/dashboard"             element={<Dashboard />} />
           <Route path="/goals/new"             element={<OnboardingGoal />} />
+          <Route path="/roadmap"             element={<RoadmapView />} />
           <Route path="/roadmap/:goalId"       element={<RoadmapView />} />
           <Route path="/module/:nodeId"        element={<ModuleView />} />
           <Route path="/review"                element={<ReviewQueue />} />

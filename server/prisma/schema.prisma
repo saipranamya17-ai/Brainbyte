@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  goals             Goal[]
+  quizAttempts      QuizAttempt[]
+  topicMastery      TopicMastery[]
+  tutorMessages     TutorMessage[]
+  resumes           Resume[]
+  jobDescriptions   JobDescription[]
+  gapAnalyses       GapAnalysis[]
+  interviewSessions InterviewSession[]
+  experiences       Experience[]
+}
+
+model Goal {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  title           String
+  targetRole      String
+  currentLevel    String
+  targetTimeframe String
+  hoursPerDay     Float    @default(2)
+  status          String   @default("active") // active | completed | paused
+  createdAt       DateTime @default(now())
+
+  roadmap Roadmap?
+}
+
+model Roadmap {
+  id          String   @id @default(uuid())
+  goalId      String   @unique
+  goal        Goal     @relation(fields: [goalId], references: [id])
+  version     Int      @default(1)
+  generatedAt DateTime @default(now())
+
+  nodes RoadmapNode[]
+}
+
+model RoadmapNode {
+  id           String  @id @default(uuid())
+  roadmapId    String
+  roadmap      Roadmap @relation(fields: [roadmapId], references: [id])
+  parentNodeId String?
+  type         String // phase | milestone | module | lesson
+  title        String
+  topicTag     String
+  difficulty   String // beginner | intermediate | advanced
+  estimatedHours Float
+  orderIndex   Int
+  status       String @default("locked") // locked | active | mastered
+
+  quizAttempts  QuizAttempt[]
+  tutorMessages TutorMessage[]
+}
+
+model QuizAttempt {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  roadmapNodeId    String
+  roadmapNode      RoadmapNode @relation(fields: [roadmapNodeId], references: [id])
+  questionsJson    Json
+  answersJson      Json
+  score            Float
+  timeSpentSeconds Int
+  attemptedAt      DateTime @default(now())
+}
+
+model TopicMastery {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  topicTag       String
+  masteryScore   Float     @default(0)
+  reviewCount    Int       @default(0)
+  lastReviewedAt DateTime?
+  nextReviewAt   DateTime?
+
+  @@unique([userId, topicTag])
+}
+
+model TutorMessage {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  roadmapNodeId String?
+  roadmapNode   RoadmapNode? @relation(fields: [roadmapNodeId], references: [id])
+  role          String // user | assistant
+  content       String      @db.Text
+  createdAt     DateTime    @default(now())
+}
+
+model Resume {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  targetRole  String
+  contentJson Json
+  generatedAt DateTime @default(now())
+}
+
+model JobDescription {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  rawText             String   @db.Text
+  extractedSkillsJson Json
+  createdAt           DateTime @default(now())
+
+  gapAnalyses GapAnalysis[]
+}
+
+model GapAnalysis {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id])
+  jobDescriptionId String
+  jobDescription   JobDescription @relation(fields: [jobDescriptionId], references: [id])
+  matchedSkillsJson Json
+  missingSkillsJson Json
+  createdAt         DateTime      @default(now())
+}
+
+model InterviewSession {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  targetRole String
+  mode       String // dsa | system_design | behavioral
+  createdAt  DateTime @default(now())
+
+  turns InterviewTurn[]
+}
+
+model InterviewTurn {
+  id         String           @id @default(uuid())
+  sessionId  String
+  session    InterviewSession @relation(fields: [sessionId], references: [id])
+  question   String           @db.Text
+  answer     String?          @db.Text
+  aiFeedback String?          @db.Text
+  score      Float?
+  orderIndex Int
+}
+
+model Experience {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String // project | internship | job | certification
+  title       String
+  description String   @db.Text
+  startDate   String?
+  endDate     String?
+  skills      String[]
+  createdAt   DateTime @default(now())
+}
